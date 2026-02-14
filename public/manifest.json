@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "AWS Account Manager",
+  "version": "1.0.0",
+  "description": "Store and auto-fill AWS account IDs across multiple accounts",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://*.signin.aws.amazon.com/*"],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.signin.aws.amazon.com/*"],
+      "js": ["src/content/index.tsx"],
+      "run_at": "document_idle"
+    }
+  ]
+}
