@@ -1,7 +1,6 @@
 import type { AWSAccount } from '@/types/account';
 import { AccountItem } from './AccountItem';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import { AwsLogo } from './AwsLogo';
 
 interface AccountListProps {
   accounts: AWSAccount[];
@@ -11,23 +10,25 @@ interface AccountListProps {
 
 /**
  * Displays a list of saved AWS accounts
- * Shows empty state when no accounts exist
  */
 export function AccountList({ accounts, onEdit, onDelete }: AccountListProps) {
-  // Empty state when no accounts saved
+  // Empty state
   if (accounts.length === 0) {
     return (
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          No AWS accounts saved yet. Click "Add Account" to get started.
-        </AlertDescription>
-      </Alert>
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="rounded-2xl bg-accent p-6 mb-5">
+          <AwsLogo className="h-12 w-auto opacity-70" />
+        </div>
+        <h3 className="font-semibold text-lg mb-2">No accounts yet</h3>
+        <p className="text-sm text-muted-foreground max-w-[240px]">
+          Add your first AWS account to enable one-click login
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       {accounts.map((account) => (
         <AccountItem
           key={account.id}

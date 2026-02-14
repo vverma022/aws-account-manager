@@ -1,7 +1,11 @@
 import type { AWSAccount, StorageData } from '@/types/account';
 
 const STORAGE_KEY = 'aws_accounts';
+const THEME_KEY = 'aws_theme';
 
+/**
+ * Get all saved AWS accounts from Chrome storage
+ */
 export async function getAccounts(): Promise<AWSAccount[]> {
   try {
     const result = await chrome.storage.sync.get(STORAGE_KEY);
@@ -13,6 +17,9 @@ export async function getAccounts(): Promise<AWSAccount[]> {
   }
 }
 
+/**
+ * Save a new AWS account to storage
+ */
 export async function saveAccount(
   account: Omit<AWSAccount, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<AWSAccount> {
@@ -34,7 +41,6 @@ export async function saveAccount(
 
 /**
  * Update an existing account by ID
- * Returns null if account not found
  */
 export async function updateAccount(
   id: string,
@@ -58,13 +64,11 @@ export async function updateAccount(
 
 /**
  * Delete an account by ID
- * Returns true if deleted, false if not found
  */
 export async function deleteAccount(id: string): Promise<boolean> {
   const accounts = await getAccounts();
   const filtered = accounts.filter((acc) => acc.id !== id);
 
-  // Account not found if lengths are equal
   if (filtered.length === accounts.length) return false;
 
   await chrome.storage.sync.set({ [STORAGE_KEY]: { accounts: filtered } });
@@ -73,9 +77,29 @@ export async function deleteAccount(id: string): Promise<boolean> {
 }
 
 /**
- * Check if an account ID already exists (for duplicate prevention)
+ * Check if an account ID already exists
  */
 export async function accountIdExists(accountId: string): Promise<boolean> {
   const accounts = await getAccounts();
   return accounts.some((acc) => acc.accountId === accountId);
+}
+
+/**
+ * Get saved theme preference
+ */
+export async function getTheme(): Promise<'light' | 'dark' | 'system'> {
+  try {
+    const result = await chrome.storage.sync.get(THEME_KEY);
+    const theme = result[THEME_KEY] as 'light' | 'dark' | 'system' | undefined;
+    return theme || 'system';
+  } catch {
+    return 'system';
+  }
+}
+
+/**
+ * Save theme preference
+ */
+export async function setTheme(theme: 'light' | 'dark' | 'system'): Promise<void> {
+  await chrome.storage.sync.set({ [THEME_KEY]: theme });
 }

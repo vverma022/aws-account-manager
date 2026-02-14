@@ -8,41 +8,59 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface AccountFormProps {
-  account?: AWSAccount; // undefined = new account, defined = editing
+  account?: AWSAccount;
   open: boolean;
   onClose: () => void;
-  onSave: (data: { accountId: string; alias: string; username?: string }) => void;
+  onSave: (data: {
+    accountId: string;
+    alias: string;
+    username?: string;
+    password?: string;
+    signinUrl?: string;
+  }) => void;
 }
+
+// Default AWS signin URL
+const DEFAULT_SIGNIN_URL = 'https://signin.aws.amazon.com/console';
 
 /**
  * Dialog form for adding or editing AWS accounts
- * Validates account ID is exactly 12 digits
  */
 export function AccountForm({ account, open, onClose, onSave }: AccountFormProps) {
   const [accountId, setAccountId] = useState('');
   const [alias, setAlias] = useState('');
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [signinUrl, setSigninUrl] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  // Reset form when dialog opens/closes or account changes
+  // Reset form when dialog opens
   useEffect(() => {
-    if (account) {
-      setAccountId(account.accountId);
-      setAlias(account.alias);
-      setUsername(account.username || '');
-    } else {
-      setAccountId('');
-      setAlias('');
-      setUsername('');
+    if (open) {
+      if (account) {
+        setAccountId(account.accountId);
+        setAlias(account.alias);
+        setUsername(account.username || '');
+        setPassword(account.password || '');
+        setSigninUrl(account.signinUrl || '');
+      } else {
+        setAccountId('');
+        setAlias('');
+        setUsername('');
+        setPassword('');
+        setSigninUrl('');
+      }
+      setError('');
+      setShowPassword(false);
     }
-    setError('');
   }, [account, open]);
 
-  // Validate AWS account ID format (12 digits)
   const validateAccountId = (value: string): boolean => {
     return /^\d{12}$/.test(value);
   };
@@ -50,14 +68,13 @@ export function AccountForm({ account, open, onClose, onSave }: AccountFormProps
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
     if (!alias.trim()) {
-      setError('Account alias is required');
+      setError('Please enter an account name');
       return;
     }
 
     if (!validateAccountId(accountId)) {
-      setError('AWS Account ID must be exactly 12 digits');
+      setError('Account ID must be exactly 12 digits');
       return;
     }
 
@@ -65,82 +82,165 @@ export function AccountForm({ account, open, onClose, onSave }: AccountFormProps
       accountId,
       alias: alias.trim(),
       username: username.trim() || undefined,
+      password: password || undefined,
+      signinUrl: signinUrl.trim() || undefined,
     });
 
     onClose();
   };
 
-  // Only allow digits in account ID field
   const handleAccountIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 12);
     setAccountId(value);
     setError('');
   };
 
+  const isEditing = !!account;
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle>
-            {account ? 'Edit Account' : 'Add New Account'}
+      <DialogContent className="w-[420px] max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-xl">
+        <DialogHeader className="p-6 pb-4">
+          <DialogTitle className="text-xl font-bold">
+            {isEditing ? 'Edit Account' : 'Add Account'}
           </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            {isEditing
+              ? 'Update your AWS account details'
+              : 'Enter your AWS account credentials for one-click login'}
+          </DialogDescription>
         </DialogHeader>
+
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            {/* Alias field */}
+          <div className="px-6 space-y-5">
+            {/* Account Name */}
             <div className="space-y-2">
-              <Label htmlFor="alias">Account Alias *</Label>
+              <Label htmlFor="alias" className="text-sm font-semibold">
+                Account Name
+              </Label>
               <Input
                 id="alias"
-                placeholder="Production, Development, etc."
+                placeholder="e.g., Production, Development"
                 value={alias}
                 onChange={(e) => {
                   setAlias(e.target.value);
                   setError('');
                 }}
+                className="h-11 rounded-lg"
+                autoFocus
               />
             </div>
 
-            {/* Account ID field */}
+            {/* Account ID */}
             <div className="space-y-2">
-              <Label htmlFor="accountId">AWS Account ID *</Label>
+              <Label htmlFor="accountId" className="text-sm font-semibold">
+                Account ID
+              </Label>
               <Input
                 id="accountId"
                 placeholder="123456789012"
                 value={accountId}
                 onChange={handleAccountIdChange}
-                className="font-mono"
+                className="h-11 font-mono rounded-lg tracking-wider"
               />
               <p className="text-xs text-muted-foreground">
-                12-digit account number ({accountId.length}/12)
+                {accountId.length}/12 digits
               </p>
             </div>
 
-            {/* Username field (optional) */}
+            {/* Username */}
             <div className="space-y-2">
-              <Label htmlFor="username">IAM Username (optional)</Label>
+              <Label htmlFor="username" className="text-sm font-semibold">
+                IAM Username{' '}
+                <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
               <Input
                 id="username"
                 placeholder="john.doe"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                className="h-11 rounded-lg"
               />
+            </div>
+
+            {/* Password */}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-semibold">
+                Password{' '}
+                <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-11 rounded-lg pr-11"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Stored locally in Chrome. Never sent to any server.
+              </p>
+            </div>
+
+            {/* Signin URL */}
+            <div className="space-y-2">
+              <Label htmlFor="signinUrl" className="text-sm font-semibold">
+                Signin URL{' '}
+                <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <Input
+                id="signinUrl"
+                type="url"
+                placeholder={DEFAULT_SIGNIN_URL}
+                value={signinUrl}
+                onChange={(e) => setSigninUrl(e.target.value)}
+                className="h-11 rounded-lg text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                Custom signin URL or leave empty for default
+              </p>
             </div>
 
             {/* Error message */}
             {error && (
-              <p className="text-sm text-destructive">{error}</p>
+              <p className="text-sm text-destructive bg-destructive/10 px-4 py-3 rounded-lg">
+                {error}
+              </p>
             )}
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          {/* Footer buttons */}
+          <div className="flex gap-3 p-6 pt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="flex-1 h-11 rounded-lg font-medium"
+            >
               Cancel
             </Button>
-            <Button type="submit">
-              {account ? 'Update' : 'Add'} Account
+            <Button
+              type="submit"
+              className="flex-1 h-11 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+            >
+              {isEditing ? 'Save Changes' : 'Add Account'}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

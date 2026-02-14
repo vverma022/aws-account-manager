@@ -6,17 +6,34 @@ import {
   updateAccount,
   deleteAccount,
   accountIdExists,
+  getTheme,
+  setTheme as saveTheme,
 } from '@/utils/storage';
 import { AccountList } from '@/components/AccountList';
 import { AccountForm } from '@/components/AccountForm';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { AwsLogo } from '@/components/AwsLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 
 /**
+ * Apply theme to document
+ */
+function applyTheme(theme: 'light' | 'dark' | 'system') {
+  const root = document.documentElement;
+  
+  if (theme === 'system') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    root.classList.toggle('dark', prefersDark);
+  } else {
+    root.classList.toggle('dark', theme === 'dark');
+  }
+}
+
+/**
  * Main popup component for AWS Account Manager
- * Manages account CRUD operations and displays the account list
  */
 function App() {
   const [accounts, setAccounts] = useState<AWSAccount[]>([]);
@@ -24,18 +41,42 @@ function App() {
   const [editingAccount, setEditingAccount] = useState<AWSAccount | undefined>();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [theme, setThemeState] = useState<'light' | 'dark' | 'system'>('system');
 
-  // Load accounts on mount
+  // Load accounts and theme on mount
   useEffect(() => {
-    const fetchAccounts = async () => {
+    const init = async () => {
       setLoading(true);
-      const data = await getAccounts();
-      setAccounts(data);
+      const [accountsData, savedTheme] = await Promise.all([
+        getAccounts(),
+        getTheme(),
+      ]);
+      setAccounts(accountsData);
+      setThemeState(savedTheme);
+      applyTheme(savedTheme);
       setLoading(false);
     };
-    fetchAccounts();
+    init();
+
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      if (theme === 'system') {
+        applyTheme('system');
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
+  // Handle theme change
+  const handleThemeChange = async (newTheme: 'light' | 'dark' | 'system') => {
+    setThemeState(newTheme);
+    applyTheme(newTheme);
+    await saveTheme(newTheme);
+  };
+
+  // Reload accounts from storage
   const reloadAccounts = async () => {
     const data = await getAccounts();
     setAccounts(data);
@@ -46,22 +87,21 @@ function App() {
     accountId: string;
     alias: string;
     username?: string;
+    password?: string;
+    signinUrl?: string;
   }) => {
     try {
       if (editingAccount) {
-        // Update existing account
         await updateAccount(editingAccount.id, data);
-        toast.success('Account updated successfully');
+        toast.success('Account updated');
       } else {
-        // Check for duplicate account ID
         const exists = await accountIdExists(data.accountId);
         if (exists) {
-          toast.error('An account with this ID already exists');
+          toast.error('This account ID already exists');
           return;
         }
-        // Create new account
         await saveAccount(data);
-        toast.success('Account added successfully');
+        toast.success('Account added');
       }
       await reloadAccounts();
       setEditingAccount(undefined);
@@ -71,33 +111,33 @@ function App() {
     }
   };
 
-  // Open edit dialog with account data
+  // Open edit dialog
   const handleEdit = (account: AWSAccount) => {
     setEditingAccount(account);
     setIsFormOpen(true);
   };
 
-  // Delete account with confirmation
+  // Delete account
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this account?')) {
+    if (confirm('Delete this account?')) {
       try {
         await deleteAccount(id);
         await reloadAccounts();
         toast.success('Account deleted');
       } catch (error) {
         console.error('Error deleting account:', error);
-        toast.error('Failed to delete account');
+        toast.error('Failed to delete');
       }
     }
   };
 
-  // Close form and reset editing state
+  // Close form
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingAccount(undefined);
   };
 
-  // Filter accounts by search term (alias or account ID)
+  // Filter accounts
   const filteredAccounts = accounts.filter(
     (acc) =>
       acc.alias.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -107,47 +147,75 @@ function App() {
   // Loading state
   if (loading) {
     return (
-      <div className="w-[400px] h-[600px] p-4 bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="w-[440px] h-[600px] flex items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="w-[400px] h-[600px] p-4 bg-background flex flex-col">
+    <div className="w-[440px] h-[600px] flex flex-col bg-background overflow-hidden">
       {/* Toast notifications */}
-      <Toaster position="top-center" richColors />
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            fontSize: '14px',
+            borderRadius: '10px',
+          },
+        }}
+      />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-lg font-bold">AWS Account Manager</h1>
-        <Button size="sm" onClick={() => setIsFormOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" />
+      <header className="flex items-center justify-between px-5 py-4 border-b bg-card">
+        <div className="flex items-center gap-3">
+          <AwsLogo className="h-5 w-auto" />
+          <span className="font-bold text-lg">Account Manager</span>
+        </div>
+        <Button
+          size="sm"
+          onClick={() => setIsFormOpen(true)}
+          className="h-9 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+        >
+          <Plus className="h-4 w-4 mr-1.5" />
           Add
         </Button>
+      </header>
+
+      {/* Search and Theme Toggle */}
+      <div className="px-5 py-4 border-b bg-card space-y-3">
+        {accounts.length > 0 && (
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search accounts..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-10 rounded-lg"
+            />
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Theme</span>
+          <ThemeToggle theme={theme} onThemeChange={handleThemeChange} />
+        </div>
       </div>
 
-      {/* Search bar (only show if accounts exist) */}
-      {accounts.length > 0 && (
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search accounts..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-      )}
-
       {/* Account list */}
-      <div className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto p-5 bg-background">
         <AccountList
           accounts={filteredAccounts}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
-      </div>
+      </main>
+
+      {/* Footer */}
+      {accounts.length > 0 && (
+        <footer className="px-5 py-3 border-t bg-card text-sm text-muted-foreground text-center">
+          {accounts.length} account{accounts.length !== 1 ? 's' : ''} saved
+        </footer>
+      )}
 
       {/* Account form dialog */}
       <AccountForm
