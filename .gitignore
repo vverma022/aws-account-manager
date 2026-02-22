@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Production builds
+releases/
+
+# Private reference documents (not for public repo)
+CHROME_WEB_STORE.md
+SUBMISSION_GUIDE.md
+PRODUCTIONIZATION_COMPLETE.md
+QUICK_START.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

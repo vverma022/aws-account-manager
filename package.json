@@ -1,11 +1,13 @@
 {
   "name": "aws-account-manager",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:prod": "tsc -b && vite build --mode production && npm run package",
+    "package": "node scripts/package.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -26,11 +28,13 @@
     "@crxjs/vite-plugin": "^2.3.0",
     "@eslint/js": "^9.39.1",
     "@tailwindcss/postcss": "^4.1.18",
+    "@types/archiver": "^7.0.0",
     "@types/chrome": "^0.1.36",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.2.2",
+    "archiver": "^7.0.1",
     "autoprefixer": "^10.4.24",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
