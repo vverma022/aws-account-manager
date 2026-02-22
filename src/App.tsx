@@ -19,7 +19,7 @@ import { Plus, Search } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 
 /**
- * Apply theme to document
+ * Apply theme class to the document root
  */
 function applyTheme(theme: 'light' | 'dark' | 'system') {
   const root = document.documentElement;
@@ -33,7 +33,12 @@ function applyTheme(theme: 'light' | 'dark' | 'system') {
 }
 
 /**
- * Main popup component for AWS Account Manager
+ * Main popup component — DepthUI layered layout.
+ * 
+ * Depth hierarchy:
+ *   bg-dark  → page background (deepest)
+ *   bg       → header/footer panels (middle)
+ *   bg-light → interactive buttons and inputs (top)
  */
 function App() {
   const [accounts, setAccounts] = useState<AWSAccount[]>([]);
@@ -43,7 +48,6 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [theme, setThemeState] = useState<'light' | 'dark' | 'system'>('system');
 
-  // Load accounts and theme on mount
   useEffect(() => {
     const init = async () => {
       setLoading(true);
@@ -58,7 +62,6 @@ function App() {
     };
     init();
 
-    // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
       if (theme === 'system') {
@@ -69,20 +72,17 @@ function App() {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  // Handle theme change
   const handleThemeChange = async (newTheme: 'light' | 'dark' | 'system') => {
     setThemeState(newTheme);
     applyTheme(newTheme);
     await saveTheme(newTheme);
   };
 
-  // Reload accounts from storage
   const reloadAccounts = async () => {
     const data = await getAccounts();
     setAccounts(data);
   };
 
-  // Handle save (create or update)
   const handleSave = async (data: {
     accountId: string;
     alias: string;
@@ -111,13 +111,11 @@ function App() {
     }
   };
 
-  // Open edit dialog
   const handleEdit = (account: AWSAccount) => {
     setEditingAccount(account);
     setIsFormOpen(true);
   };
 
-  // Delete account
   const handleDelete = async (id: string) => {
     if (confirm('Delete this account?')) {
       try {
@@ -131,78 +129,73 @@ function App() {
     }
   };
 
-  // Close form
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingAccount(undefined);
   };
 
-  // Filter accounts
   const filteredAccounts = accounts.filter(
     (acc) =>
       acc.alias.toLowerCase().includes(searchTerm.toLowerCase()) ||
       acc.accountId.includes(searchTerm)
   );
 
-  // Loading state
   if (loading) {
     return (
-      <div className="w-[440px] h-[600px] flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      <div className="w-[440px] h-[600px] flex items-center justify-center bg-bg-dark">
+        <div className="animate-pulse text-text-muted">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="w-[440px] h-[600px] flex flex-col bg-background overflow-hidden">
-      {/* Toast notifications */}
+    <div className="w-[440px] h-[600px] flex flex-col bg-bg-dark overflow-hidden">
       <Toaster
         position="top-center"
         toastOptions={{
           style: {
             fontSize: '14px',
-            borderRadius: '10px',
+            borderRadius: '12px',
           },
         }}
       />
 
-      {/* Header */}
-      <header className="flex items-center justify-between px-5 py-4 border-b bg-card">
+      {/* Header — middle depth layer (bg-surface) with bottom shadow */}
+      <header className="flex items-center justify-between px-5 py-4 bg-bg-surface shadow-small">
         <div className="flex items-center gap-3">
           <AwsLogo className="h-5 w-auto" />
-          <span className="font-bold text-lg">Account Manager</span>
+          <span className="font-bold text-lg text-text-primary">Account Manager</span>
         </div>
         <Button
           size="sm"
           onClick={() => setIsFormOpen(true)}
-          className="h-9 px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
         >
           <Plus className="h-4 w-4 mr-1.5" />
           Add
         </Button>
       </header>
 
-      {/* Search and Theme Toggle */}
-      <div className="px-5 py-4 border-b bg-card space-y-3">
+      {/* Search + theme controls — middle depth layer */}
+      <div className="px-5 py-4 bg-bg-surface space-y-3 shadow-small">
         {accounts.length > 0 && (
           <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
             <Input
               placeholder="Search accounts..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-10 rounded-lg"
+              className="pl-10 h-10"
             />
           </div>
         )}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Theme</span>
+          <span className="text-sm text-text-muted">Theme</span>
           <ThemeToggle theme={theme} onThemeChange={handleThemeChange} />
         </div>
       </div>
 
-      {/* Account list */}
-      <main className="flex-1 overflow-y-auto p-5 bg-background">
+      {/* Account list — deepest layer (bg-dark) so cards float above */}
+      <main className="flex-1 overflow-y-auto p-5 bg-bg-dark">
         <AccountList
           accounts={filteredAccounts}
           onEdit={handleEdit}
@@ -210,14 +203,13 @@ function App() {
         />
       </main>
 
-      {/* Footer */}
+      {/* Footer — middle depth layer */}
       {accounts.length > 0 && (
-        <footer className="px-5 py-3 border-t bg-card text-sm text-muted-foreground text-center">
+        <footer className="px-5 py-3 bg-bg-surface text-sm text-text-muted text-center shadow-small">
           {accounts.length} account{accounts.length !== 1 ? 's' : ''} saved
         </footer>
       )}
 
-      {/* Account form dialog */}
       <AccountForm
         account={editingAccount}
         open={isFormOpen}

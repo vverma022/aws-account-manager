@@ -10,19 +10,15 @@ interface AccountItemProps {
   onDelete: (id: string) => void;
 }
 
-// Default AWS signin URL
 const DEFAULT_SIGNIN_URL = 'https://signin.aws.amazon.com/console';
 
 /**
- * Opens AWS signin page and attempts to pre-fill credentials
+ * Opens AWS signin page and stores credentials for the content script
  */
 function openAndFillCredentials(account: AWSAccount) {
   const signinUrl = account.signinUrl || DEFAULT_SIGNIN_URL;
-  
-  // Build URL with account ID parameter
   const url = new URL(signinUrl);
   
-  // Store credentials temporarily for content script to use
   chrome.storage.local.set({
     pendingCredentials: {
       accountId: account.accountId,
@@ -32,15 +28,15 @@ function openAndFillCredentials(account: AWSAccount) {
     }
   });
   
-  // Open the signin page
   chrome.tabs.create({ url: url.toString() });
 }
 
 /**
- * Displays a single AWS account card with actions
+ * Account card — DepthUI middle-layer surface that floats above the page.
+ * Uses Card's built-in shadow-small + hover lift.
+ * Action buttons use ghost/primary variants for clear interactive hierarchy.
  */
 export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
-  // Copy account ID to clipboard
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(account.accountId);
@@ -51,37 +47,35 @@ export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
     }
   };
 
-  // Open AWS signin with pre-filled credentials
   const handleLogin = () => {
     openAndFillCredentials(account);
     toast.success('Opening AWS signin...');
   };
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200 rounded-xl border-2 hover:border-primary/30">
-      <CardContent className="p-5">
+    <Card className="group">
+      <CardContent>
         <div className="flex items-start justify-between gap-4">
-          {/* Account info */}
           <div className="flex-1 min-w-0 space-y-2">
-            <h3 className="font-bold text-lg truncate">
+            <h3 className="font-bold text-lg truncate text-text-primary">
               {account.alias}
             </h3>
             
             <div className="space-y-1.5">
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-2 text-text-muted">
                 <Hash className="h-4 w-4 flex-shrink-0" />
                 <span className="font-mono text-sm tracking-wider">{account.accountId}</span>
               </div>
               
               {account.username && (
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2 text-text-muted">
                   <User className="h-4 w-4 flex-shrink-0" />
                   <span className="text-sm truncate">{account.username}</span>
                 </div>
               )}
               
               {account.password && (
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2 text-text-muted">
                   <Key className="h-4 w-4 flex-shrink-0" />
                   <span className="text-sm">••••••••</span>
                 </div>
@@ -89,12 +83,9 @@ export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
             </div>
           </div>
 
-          {/* Action buttons */}
           <div className="flex flex-col gap-2">
-            {/* Primary action - Login */}
             <Button
               size="sm"
-              className="rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
               onClick={handleLogin}
               title="Open & Login"
             >
@@ -102,12 +93,11 @@ export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
               Login
             </Button>
             
-            {/* Secondary actions */}
             <div className="flex items-center gap-1 justify-end">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-accent hover:text-primary"
+                className="h-8 w-8"
                 onClick={handleCopy}
                 title="Copy Account ID"
               >
@@ -116,7 +106,7 @@ export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-accent hover:text-primary"
+                className="h-8 w-8"
                 onClick={() => onEdit(account)}
                 title="Edit"
               >
@@ -125,7 +115,7 @@ export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={() => onDelete(account.id)}
                 title="Delete"
               >

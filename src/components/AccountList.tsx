@@ -8,19 +8,15 @@ interface AccountListProps {
   onDelete: (id: string) => void;
 }
 
-/**
- * Displays a list of saved AWS accounts
- */
 export function AccountList({ accounts, onEdit, onDelete }: AccountListProps) {
-  // Empty state
   if (accounts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="rounded-2xl bg-accent p-6 mb-5">
+        <div className="rounded-[16px] bg-bg-surface p-6 mb-5 shadow-small">
           <AwsLogo className="h-12 w-auto opacity-70" />
         </div>
-        <h3 className="font-semibold text-lg mb-2">No accounts yet</h3>
-        <p className="text-sm text-muted-foreground max-w-[240px]">
+        <h3 className="font-semibold text-lg mb-2 text-text-primary">No accounts yet</h3>
+        <p className="text-sm text-text-muted max-w-[240px]">
           Add your first AWS account to enable one-click login
         </p>
       </div>

@@ -25,11 +25,12 @@ interface AccountFormProps {
   }) => void;
 }
 
-// Default AWS signin URL
 const DEFAULT_SIGNIN_URL = 'https://signin.aws.amazon.com/console';
 
 /**
- * Dialog form for adding or editing AWS accounts
+ * Dialog form for adding or editing AWS accounts.
+ * The dialog itself is a top-layer DepthUI surface (shadow-large).
+ * Input fields are recessed (shadow-recessed) to sit below the dialog surface.
  */
 export function AccountForm({ account, open, onClose, onSave }: AccountFormProps) {
   const [accountId, setAccountId] = useState('');
@@ -40,7 +41,6 @@ export function AccountForm({ account, open, onClose, onSave }: AccountFormProps
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
       if (account) {
@@ -99,12 +99,12 @@ export function AccountForm({ account, open, onClose, onSave }: AccountFormProps
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[420px] max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-xl">
+      <DialogContent className="w-[420px] max-h-[90vh] overflow-y-auto p-0 gap-0">
         <DialogHeader className="p-6 pb-4">
-          <DialogTitle className="text-xl font-bold">
+          <DialogTitle className="text-xl font-bold text-text-primary">
             {isEditing ? 'Edit Account' : 'Add Account'}
           </DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
+          <DialogDescription className="text-sm text-text-muted">
             {isEditing
               ? 'Update your AWS account details'
               : 'Enter your AWS account credentials for one-click login'}
@@ -113,9 +113,8 @@ export function AccountForm({ account, open, onClose, onSave }: AccountFormProps
 
         <form onSubmit={handleSubmit}>
           <div className="px-6 space-y-5">
-            {/* Account Name */}
             <div className="space-y-2">
-              <Label htmlFor="alias" className="text-sm font-semibold">
+              <Label htmlFor="alias" className="text-sm font-semibold text-text-primary">
                 Account Name
               </Label>
               <Input
@@ -126,14 +125,13 @@ export function AccountForm({ account, open, onClose, onSave }: AccountFormProps
                   setAlias(e.target.value);
                   setError('');
                 }}
-                className="h-11 rounded-lg"
+                className="h-11"
                 autoFocus
               />
             </div>
 
-            {/* Account ID */}
             <div className="space-y-2">
-              <Label htmlFor="accountId" className="text-sm font-semibold">
+              <Label htmlFor="accountId" className="text-sm font-semibold text-text-primary">
                 Account ID
               </Label>
               <Input
@@ -141,33 +139,31 @@ export function AccountForm({ account, open, onClose, onSave }: AccountFormProps
                 placeholder="123456789012"
                 value={accountId}
                 onChange={handleAccountIdChange}
-                className="h-11 font-mono rounded-lg tracking-wider"
+                className="h-11 font-mono tracking-wider"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-muted">
                 {accountId.length}/12 digits
               </p>
             </div>
 
-            {/* Username */}
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-sm font-semibold">
+              <Label htmlFor="username" className="text-sm font-semibold text-text-primary">
                 IAM Username{' '}
-                <span className="text-muted-foreground font-normal">(optional)</span>
+                <span className="text-text-muted font-normal">(optional)</span>
               </Label>
               <Input
                 id="username"
                 placeholder="john.doe"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="h-11 rounded-lg"
+                className="h-11"
               />
             </div>
 
-            {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-semibold">
+              <Label htmlFor="password" className="text-sm font-semibold text-text-primary">
                 Password{' '}
-                <span className="text-muted-foreground font-normal">(optional)</span>
+                <span className="text-text-muted font-normal">(optional)</span>
               </Label>
               <div className="relative">
                 <Input
@@ -176,32 +172,31 @@ export function AccountForm({ account, open, onClose, onSave }: AccountFormProps
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-11 rounded-lg pr-11"
+                  className="h-11 pr-11"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-md"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    <EyeOff className="h-4 w-4 text-text-muted" />
                   ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    <Eye className="h-4 w-4 text-text-muted" />
                   )}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-muted">
                 Stored locally in Chrome. Never sent to any server.
               </p>
             </div>
 
-            {/* Signin URL */}
             <div className="space-y-2">
-              <Label htmlFor="signinUrl" className="text-sm font-semibold">
+              <Label htmlFor="signinUrl" className="text-sm font-semibold text-text-primary">
                 Signin URL{' '}
-                <span className="text-muted-foreground font-normal">(optional)</span>
+                <span className="text-text-muted font-normal">(optional)</span>
               </Label>
               <Input
                 id="signinUrl"
@@ -209,34 +204,32 @@ export function AccountForm({ account, open, onClose, onSave }: AccountFormProps
                 placeholder={DEFAULT_SIGNIN_URL}
                 value={signinUrl}
                 onChange={(e) => setSigninUrl(e.target.value)}
-                className="h-11 rounded-lg text-sm"
+                className="h-11 text-sm"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-muted">
                 Custom signin URL or leave empty for default
               </p>
             </div>
 
-            {/* Error message */}
             {error && (
-              <p className="text-sm text-destructive bg-destructive/10 px-4 py-3 rounded-lg">
+              <p className="text-sm text-destructive bg-destructive/10 px-4 py-3 rounded-[8px]">
                 {error}
               </p>
             )}
           </div>
 
-          {/* Footer buttons */}
           <div className="flex gap-3 p-6 pt-6">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1 h-11 rounded-lg font-medium"
+              className="flex-1 h-11"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="flex-1 h-11 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+              className="flex-1 h-11"
             >
               {isEditing ? 'Save Changes' : 'Add Account'}
             </Button>

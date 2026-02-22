@@ -19,7 +19,9 @@ const themes = [
 ];
 
 /**
- * Theme toggle dropdown using shadcn/ui
+ * Theme toggle dropdown.
+ * Trigger button uses the secondary/outline DepthUI variant.
+ * Active theme item gets bg-light + shadow-small for a selected/raised look.
  */
 export function ThemeToggle({ theme, onThemeChange }: ThemeToggleProps) {
   const currentTheme = themes.find((t) => t.value === theme) || themes[2];
@@ -31,20 +33,20 @@ export function ThemeToggle({ theme, onThemeChange }: ThemeToggleProps) {
         <Button
           variant="outline"
           size="sm"
-          className="h-9 px-3 rounded-lg gap-2"
+          className="h-9 px-3 gap-2"
         >
           <CurrentIcon className="h-4 w-4" />
           <span className="text-sm">{currentTheme.label}</span>
           <ChevronDown className="h-3 w-3 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="rounded-xl">
+      <DropdownMenuContent align="end">
         {themes.map(({ value, icon: Icon, label }) => (
           <DropdownMenuItem
             key={value}
             onClick={() => onThemeChange(value)}
-            className={`rounded-lg cursor-pointer ${
-              theme === value ? 'bg-accent' : ''
+            className={`cursor-pointer ${
+              theme === value ? 'bg-bg-light shadow-small' : ''
             }`}
           >
             <Icon className="h-4 w-4 mr-2" />
