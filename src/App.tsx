@@ -8,6 +8,7 @@ import {
   accountIdExists,
   getTheme,
   setTheme as saveTheme,
+  migrateAccounts,
 } from '@/utils/storage';
 import { AccountList } from '@/components/AccountList';
 import { AccountForm } from '@/components/AccountForm';
@@ -51,6 +52,10 @@ function App() {
   useEffect(() => {
     const init = async () => {
       setLoading(true);
+      
+      // Migrate any legacy plain-text passwords to encrypted format
+      await migrateAccounts();
+      
       const [accountsData, savedTheme] = await Promise.all([
         getAccounts(),
         getTheme(),
