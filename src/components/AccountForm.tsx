@@ -47,7 +47,8 @@ export function AccountForm({ account, open, onClose, onSave }: AccountFormProps
         setAccountId(account.accountId);
         setAlias(account.alias);
         setUsername(account.username || '');
-        setPassword(account.password || '');
+        // Password is always a string here (decrypted by getAccounts)
+        setPassword(typeof account.password === 'string' ? account.password : '');
         setSigninUrl(account.signinUrl || '');
       } else {
         setAccountId('');
