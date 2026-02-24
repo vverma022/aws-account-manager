@@ -3,8 +3,8 @@
   "name": "AWS Account Manager",
   "version": "1.0.0",
   "description": "Securely store and quickly switch between multiple AWS accounts. Streamline your AWS workflow with encrypted account management.",
-  "permissions": ["storage", "activeTab"],
-  "host_permissions": ["https://*.signin.aws.amazon.com/*"],
+  "permissions": ["storage", "activeTab", "cookies"],
+  "host_permissions": ["https://*.signin.aws.amazon.com/*", "https://*.aws.amazon.com/*"],
   "action": {
     "default_popup": "index.html",
     "default_title": "AWS Account Manager",
