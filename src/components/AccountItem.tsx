@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Copy, Trash2, Pencil, User, Hash, ExternalLink, Key } from 'lucide-react';
 import { toast } from 'sonner';
+import { loginToAwsAccount, LOGIN_RESULT_SWITCHED } from '@/utils/awsLogin';
 
 interface AccountItemProps {
   account: AWSAccount;
@@ -10,48 +11,11 @@ interface AccountItemProps {
   onDelete: (id: string) => void;
 }
 
-const DEFAULT_SIGNIN_URL = 'https://signin.aws.amazon.com/console';
-
-const AWS_COOKIE_DOMAINS = [
-  'signin.aws.amazon.com',
-  'aws.amazon.com',
-  'console.aws.amazon.com',
-];
-
-
-async function clearAwsSessionCookies() {
-  for (const domain of AWS_COOKIE_DOMAINS) {
-    try {
-      const cookies = await chrome.cookies.getAll({ domain });
-      const baseUrl = `https://${domain}`;
-      await Promise.all(
-        cookies.map((cookie) =>
-          chrome.cookies.remove({ url: baseUrl + (cookie.path || '/'), name: cookie.name })
-        )
-      );
-    } catch (err) {
-      console.warn(`AWS Account Manager: Could not clear cookies for ${domain}`, err);
-    }
-  }
-}
-
-async function openAndFillCredentials(account: AWSAccount) {
-  await clearAwsSessionCookies();
-
-  const signinUrl = account.signinUrl || DEFAULT_SIGNIN_URL;
-
-  await chrome.storage.local.set({
-    pendingCredentials: {
-      accountId: account.accountId,
-      username: account.username || '',
-      password: account.password || '',
-      timestamp: Date.now(),
-    },
-  });
-
-  chrome.tabs.create({ url: signinUrl });
-}
-
+/**
+ * Account card — DepthUI middle-layer surface that floats above the page.
+ * Uses Card's built-in shadow-small + hover lift.
+ * Action buttons use ghost/primary variants for clear interactive hierarchy.
+ */
 export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
   const handleCopy = async () => {
     try {
@@ -65,8 +29,8 @@ export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
 
   const handleLogin = async () => {
     try {
-      await openAndFillCredentials(account);
-      toast.success('Switching account...');
+      const result = await loginToAwsAccount(account);
+      toast.success(result === LOGIN_RESULT_SWITCHED ? 'Switched to console' : 'Switching account...');
     } catch (err) {
       console.error('AWS Account Manager: Login failed', err);
       toast.error('Failed to switch account');
@@ -81,20 +45,20 @@ export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
             <h3 className="font-bold text-lg truncate text-text-primary">
               {account.alias}
             </h3>
-            
+
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 text-text-muted">
                 <Hash className="h-4 w-4 shrink-0" />
                 <span className="font-mono text-sm tracking-wider">{account.accountId}</span>
               </div>
-              
+
               {account.username && (
                 <div className="flex items-center gap-2 text-text-muted">
                   <User className="h-4 w-4 shrink-0" />
                   <span className="text-sm truncate">{account.username}</span>
                 </div>
               )}
-              
+
               {account.password && (
                 <div className="flex items-center gap-2 text-text-muted">
                   <Key className="h-4 w-4 shrink-0" />
@@ -113,7 +77,7 @@ export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
               <ExternalLink className="h-4 w-4 mr-1.5" />
               Login
             </Button>
-            
+
             <div className="flex items-center gap-1 justify-end">
               <Button
                 variant="ghost"
