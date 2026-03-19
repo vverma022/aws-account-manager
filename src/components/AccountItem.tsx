@@ -3,32 +3,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Copy, Trash2, Pencil, User, Hash, ExternalLink, Key } from 'lucide-react';
 import { toast } from 'sonner';
+import { loginToAwsAccount, LOGIN_RESULT_SWITCHED } from '@/utils/awsLogin';
 
 interface AccountItemProps {
   account: AWSAccount;
   onEdit: (account: AWSAccount) => void;
   onDelete: (id: string) => void;
-}
-
-const DEFAULT_SIGNIN_URL = 'https://signin.aws.amazon.com/console';
-
-/**
- * Opens AWS signin page and stores credentials for the content script
- */
-function openAndFillCredentials(account: AWSAccount) {
-  const signinUrl = account.signinUrl || DEFAULT_SIGNIN_URL;
-  const url = new URL(signinUrl);
-  
-  chrome.storage.local.set({
-    pendingCredentials: {
-      accountId: account.accountId,
-      username: account.username || '',
-      password: account.password || '',
-      timestamp: Date.now(),
-    }
-  });
-  
-  chrome.tabs.create({ url: url.toString() });
 }
 
 /**
@@ -47,9 +27,14 @@ export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
     }
   };
 
-  const handleLogin = () => {
-    openAndFillCredentials(account);
-    toast.success('Opening AWS signin...');
+  const handleLogin = async () => {
+    try {
+      const result = await loginToAwsAccount(account);
+      toast.success(result === LOGIN_RESULT_SWITCHED ? 'Switched to console' : 'Switching account...');
+    } catch (err) {
+      console.error('AWS Account Manager: Login failed', err);
+      toast.error('Failed to switch account');
+    }
   };
 
   return (
@@ -60,20 +45,20 @@ export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
             <h3 className="font-bold text-lg truncate text-text-primary">
               {account.alias}
             </h3>
-            
+
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 text-text-muted">
                 <Hash className="h-4 w-4 flex-shrink-0" />
                 <span className="font-mono text-sm tracking-wider">{account.accountId}</span>
               </div>
-              
+
               {account.username && (
                 <div className="flex items-center gap-2 text-text-muted">
                   <User className="h-4 w-4 flex-shrink-0" />
                   <span className="text-sm truncate">{account.username}</span>
                 </div>
               )}
-              
+
               {account.password && (
                 <div className="flex items-center gap-2 text-text-muted">
                   <Key className="h-4 w-4 flex-shrink-0" />
@@ -92,7 +77,7 @@ export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
               <ExternalLink className="h-4 w-4 mr-1.5" />
               Login
             </Button>
-            
+
             <div className="flex items-center gap-1 justify-end">
               <Button
                 variant="ghost"
