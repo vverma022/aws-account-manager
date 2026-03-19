@@ -100,7 +100,7 @@ export function AccountForm({ account, open, onClose, onSave }: AccountFormProps
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[420px] max-h-[90vh] overflow-y-auto p-0 gap-0">
+      <DialogContent className="w-[420px] max-h-[90vh] overflow-y-auto scrollbar-hide p-0 gap-0">
         <DialogHeader className="p-6 pb-4">
           <DialogTitle className="text-xl font-bold text-text-primary">
             {isEditing ? 'Edit Account' : 'Add Account'}

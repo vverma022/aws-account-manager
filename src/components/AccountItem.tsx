@@ -48,20 +48,20 @@ export function AccountItem({ account, onEdit, onDelete }: AccountItemProps) {
 
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 text-text-muted">
-                <Hash className="h-4 w-4 flex-shrink-0" />
+                <Hash className="h-4 w-4 shrink-0" />
                 <span className="font-mono text-sm tracking-wider">{account.accountId}</span>
               </div>
 
               {account.username && (
                 <div className="flex items-center gap-2 text-text-muted">
-                  <User className="h-4 w-4 flex-shrink-0" />
+                  <User className="h-4 w-4 shrink-0" />
                   <span className="text-sm truncate">{account.username}</span>
                 </div>
               )}
 
               {account.password && (
                 <div className="flex items-center gap-2 text-text-muted">
-                  <Key className="h-4 w-4 flex-shrink-0" />
+                  <Key className="h-4 w-4 shrink-0" />
                   <span className="text-sm">••••••••</span>
                 </div>
               )}
